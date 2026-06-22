@@ -168,6 +168,7 @@
             -webkit-backface-visibility: hidden;
             will-change: transform, backdrop-filter;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
         }
 
         .glass-btn:hover:not(:disabled) {
@@ -201,6 +202,7 @@
             will-change: transform, backdrop-filter;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
         }
 
         .glass-btn-primary:hover:not(:disabled) {
@@ -234,6 +236,7 @@
             will-change: transform, backdrop-filter;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
         }
 
         .glass-btn-danger:hover:not(:disabled) {
@@ -668,6 +671,190 @@
 
         // Game time configuration
         const GAME_TIME_SECONDS = 40;
+
+        // Game state
+        let gameState = {
+            isRunning: false,
+            isPaused: false,
+            timeLeft: GAME_TIME_SECONDS,
+            money: 0,
+            targetMoney: 650,
+            level: 1,
+            dynamiteCount: 0,
+            items: {
+                gem: false,
+                flask: false
+            }
+        };
+
+        // Initialize game on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Game initialized');
+            const startBtn = document.getElementById('btn-start-game');
+            if (startBtn) {
+                startBtn.addEventListener('click', startGame);
+            }
+        });
+
+        function startGame() {
+            console.log('Starting game...');
+            const screenMenu = document.getElementById('screen-menu');
+            const hudStrip = document.getElementById('hud-strip');
+            
+            if (screenMenu) {
+                screenMenu.classList.add('hidden');
+            }
+            if (hudStrip) {
+                hudStrip.style.display = 'flex';
+            }
+
+            gameState.isRunning = true;
+            gameState.timeLeft = GAME_TIME_SECONDS;
+            gameState.money = 0;
+            gameState.dynamiteCount = 0;
+
+            // Update HUD
+            updateHUD();
+
+            // Start countdown timer
+            startGameTimer();
+
+            // Play sound
+            sfx.playPowerup();
+        }
+
+        function startGameTimer() {
+            const timerInterval = setInterval(function() {
+                if (!gameState.isPaused && gameState.isRunning) {
+                    gameState.timeLeft--;
+                    updateHUD();
+
+                    if (gameState.timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateHUD() {
+            const moneyEl = document.getElementById('hud-money');
+            const timeEl = document.getElementById('hud-time');
+            const targetEl = document.getElementById('hud-target');
+            const levelEl = document.getElementById('hud-level');
+            const dynamiteEl = document.getElementById('hud-dynamite');
+
+            if (moneyEl) moneyEl.textContent = '$' + gameState.money;
+            if (timeEl) timeEl.textContent = gameState.timeLeft;
+            if (targetEl) targetEl.textContent = '$' + gameState.targetMoney;
+            if (levelEl) levelEl.textContent = gameState.level;
+            if (dynamiteEl) dynamiteEl.textContent = gameState.dynamiteCount;
+        }
+
+        function endGame() {
+            gameState.isRunning = false;
+            const screenGameOver = document.getElementById('screen-gameover');
+            const screenMenu = document.getElementById('screen-menu');
+
+            if (screenGameOver) {
+                document.getElementById('go-money').textContent = '$' + gameState.money;
+                document.getElementById('go-target').textContent = '$' + gameState.targetMoney;
+                document.getElementById('go-level').textContent = 'Cửa ' + gameState.level;
+                screenGameOver.classList.remove('hidden');
+            }
+        }
+
+        function buyItem(itemType, cost) {
+            if (gameState.money >= cost) {
+                gameState.money -= cost;
+                
+                switch(itemType) {
+                    case 'dynamite':
+                        gameState.dynamiteCount++;
+                        sfx.playPowerup();
+                        break;
+                    case 'strength':
+                        sfx.playPowerup();
+                        break;
+                    case 'clover':
+                        gameState.items.gem = true;
+                        sfx.playPowerup();
+                        break;
+                    case 'rockbook':
+                        gameState.items.flask = true;
+                        sfx.playPowerup();
+                        break;
+                }
+                
+                updateHUD();
+            }
+        }
+
+        // Pause button handler
+        const pauseBtn = document.getElementById('btn-pause');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', function() {
+                if (gameState.isRunning) {
+                    gameState.isPaused = !gameState.isPaused;
+                    const icon = document.getElementById('pause-icon');
+                    if (icon) {
+                        icon.className = gameState.isPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause';
+                    }
+                }
+            });
+        }
+
+        // Sound toggle
+        const soundBtn = document.getElementById('btn-sound');
+        if (soundBtn) {
+            soundBtn.addEventListener('click', function() {
+                sfx.enabled = !sfx.enabled;
+                const icon = document.getElementById('sound-icon');
+                if (icon) {
+                    icon.className = sfx.enabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+                }
+            });
+        }
+
+        // Shoot button handler
+        const shootBtn = document.getElementById('btn-shoot');
+        if (shootBtn) {
+            shootBtn.addEventListener('click', function() {
+                if (gameState.isRunning && !gameState.isPaused) {
+                    gameState.money += 10;
+                    sfx.playShoot();
+                    updateHUD();
+                }
+            });
+        }
+
+        // Restart button
+        const restartBtn = document.getElementById('btn-restart');
+        if (restartBtn) {
+            restartBtn.addEventListener('click', function() {
+                location.reload();
+            });
+        }
+
+        // Next level button
+        const nextLevelBtn = document.getElementById('btn-next-level');
+        if (nextLevelBtn) {
+            nextLevelBtn.addEventListener('click', function() {
+                gameState.level++;
+                gameState.targetMoney += 300;
+                gameState.timeLeft = GAME_TIME_SECONDS;
+                gameState.money = 0;
+                
+                const screenShop = document.getElementById('screen-shop');
+                if (screenShop) {
+                    screenShop.classList.add('hidden');
+                }
+
+                gameState.isRunning = true;
+                updateHUD();
+                startGameTimer();
+            });
+        }
     </script>
 
     <!-- FULL SCREEN 3D Canvas Container -->
@@ -688,7 +875,7 @@
     </div>
 
     <!-- TOP HUD STRIP - Transparent container with floating glass panels -->
-    <div id="hud-strip" class="absolute top-0 left-0 right-0 z-30 pointer-events-none flex justify-between p-4"
+    <div id="hud-strip" class="absolute top-0 left-0 right-0 z-30 pointer-events-none flex justify-between p-4 hidden"
         style="height: auto;">
 
         <!-- LEFT BLOCK: Score card + Timer capsule -->
@@ -703,7 +890,7 @@
                     </div>
                     <div>
                         <div class="text-xs text-amber-300 uppercase tracking-widest font-black">Tiền</div>
-                        <div id="hud-money" class="text-2xl font-black text-green-400 gold-glow leading-none">$100</div>
+                        <div id="hud-money" class="text-2xl font-black text-green-400 gold-glow leading-none">$0</div>
                     </div>
                 </div>
 
@@ -1008,11 +1195,6 @@
         </div>
     </div>
 
-    <script>
-        // Find all sections of the original game code and replace the timeLeft initialization
-        // This is where you would add your game logic that uses GAME_TIME_SECONDS variable
-        // The variable is now set to 40 seconds at the top of the file
-    </script>
 </body>
 
 </html>
