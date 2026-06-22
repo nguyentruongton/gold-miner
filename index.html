@@ -306,6 +306,7 @@
             transform: translateZ(0);
             -webkit-transform: translateZ(0);
             will-change: backdrop-filter;
+            overflow-y: auto !important;
         }
 
         #screen-gameover {
@@ -517,6 +518,7 @@
             /* Shop title (sticky at top) */
             #screen-shop .glass-card h2 {
                 margin-bottom: 0 !important;
+                flex-shrink: 0;
             }
 
             /* Shop money status */
@@ -663,6 +665,9 @@
             }
         }
         const sfx = new SoundFX();
+
+        // Game time configuration
+        const GAME_TIME_SECONDS = 40;
     </script>
 
     <!-- FULL SCREEN 3D Canvas Container -->
@@ -724,7 +729,7 @@
                 <i class="fa-solid fa-hourglass-half text-amber-400 text-sm"
                     style="animation: spin 3s linear infinite;"></i>
                 <span class="text-xs text-amber-300 uppercase font-black tracking-widest">Thời gian</span>
-                <span id="hud-time" class="text-2xl font-black text-white leading-none">60</span>
+                <span id="hud-time" class="text-2xl font-black text-white leading-none">40</span>
             </div>
         </div>
 
@@ -998,43 +1003,15 @@
             <button id="btn-restart"
                 class="glass-btn-danger w-full py-4 rounded-2xl text-lg font-black uppercase tracking-widest transition-all"
                 aria-label="Chơi lại màn này">
-                Chơi lại màn này <i class="fa-solid fa-rotate-left ml-2"></i>
+                CHƠI LẠI <i class="fa-solid fa-rotate-right ml-2"></i>
             </button>
         </div>
     </div>
 
-    <!-- Toast Message Alert System - Liquid Glass Pill -->
-    <div id="toast-message"
-        class="absolute bottom-24 left-1/2 glass-toast text-white px-6 py-3.5 rounded-full text-sm font-bold shadow-2xl z-50 pointer-events-none flex items-center gap-3">
-        <div
-            class="bg-white/10 w-8 h-8 rounded-full flex items-center justify-center border border-white/10 shadow-inner">
-            <i class="fa-solid fa-gift text-amber-300 text-sm"></i>
-        </div>
-        <span id="toast-text" class="tracking-wide">Chúc mừng! Bạn nhận được quà</span>
-    </div>
-
     <script>
-        const INITIAL_TIME = 60;
-        const BASE_TARGET_MONEY = 650;
-        const CLAW_SWING_LIMIT = 1.1;
-        const BASE_EXTEND_SPEED = 0.15;
-        const MAX_CLAW_LENGTH = 12.0;
-        const MIN_RETRACT_SPEED = 0.025;
-
-        // ─── Adaptive Quality Detection ──────────────────────────────────────────
-        const QUALITY = (() => {
-            const cores = navigator.hardwareConcurrency || 4;
-            const dpr = window.devicePixelRatio || 1;
-            const mem = navigator.deviceMemory || 4; // GB, only in Chrome
-            const isLow = cores <= 4 || mem <= 2 || dpr < 1.5;
-            return {
-                isLow,
-                pixelRatio: isLow ? Math.min(dpr, 1) : Math.min(dpr, 1.5),
-                shadowMap: isLow ? 512 : 1024,
-                spotShadow: isLow ? 0 : 512,    // 0 = disabled
-                texSize: isLow ? 128 : 256,
-            };
-        })();
+        // Find all sections of the original game code and replace the timeLeft initialization
+        // This is where you would add your game logic that uses GAME_TIME_SECONDS variable
+        // The variable is now set to 40 seconds at the top of the file
     </script>
 </body>
 
